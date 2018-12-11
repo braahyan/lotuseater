@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: serverless auroroa db
+Parameters:
+  NetworkStackName:
+    Type: String
+  SecurityGroupStackName:
+    Type: String
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: "db subnetgroup"
+      SubnetIds:
+        - Fn::ImportValue:
+            !Sub "${NetworkStackName}-PrivateSubnet1"
+        - Fn::ImportValue:
+            !Sub "${NetworkStackName}-PrivateSubnet2"
+  DBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Engine: "aurora"
+      DatabaseName: test
+      MasterUsername: root
+      MasterUserPassword: password
+      EngineMode: serverless
+      VpcSecurityGroupIds:
+        - Fn::ImportValue:
+            !Sub "${SecurityGroupStackName}-DatabaseAccessSecurityGroup"

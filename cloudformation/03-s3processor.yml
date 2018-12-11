@@ -1,0 +1,38 @@
+Transform: 'AWS::Serverless-2016-10-31'
+#Parameters:
+#  DBUsername:
+#    Type: String
+#  DBPassword:
+#    Type: String
+#    NoEcho: true
+#  DBHost:
+#    Type: String
+#  DBName:
+#    Type: String
+Resources:
+  S3BucketConsumer:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: python3.6
+      Handler: index.s3_handler
+      CodeUri: ./../src
+      Events:
+        ObjectReceived:
+          Type: S3
+          Properties:
+            Bucket: !Ref S3Bucket
+            Events: s3:ObjectCreated:*
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+Outputs:
+  S3Bucket:
+    Description: The subnet ID to use for public web servers
+    Value:
+      Ref: S3Bucket
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-S3Bucket"

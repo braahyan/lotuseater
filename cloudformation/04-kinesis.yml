@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Stack for Firehose DeliveryStream S3 Destination.
+Parameters:
+  S3ProcessorStackName:
+    Type: String
+Outputs:
+  DeliveryStreamArn:
+    Description: The subnet ID to use for public web servers
+    Value: !GetAtt deliverystream.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DeliveryStreamArn"
+  DeliveryStreamName:
+    Description: The subnet ID to use for public web servers
+    Value: !Ref deliverystream
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DeliveryStreamName"
+Resources:
+  deliverystream:
+    DependsOn:
+      - deliveryPolicy
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !Join
+          - ''
+          - - 'arn:aws:s3:::'
+            - Fn::ImportValue:
+                !Sub "${S3ProcessorStackName}-S3Bucket"
+        BufferingHints:
+          IntervalInSeconds: '60'
+          SizeInMBs: '50'
+        CompressionFormat: UNCOMPRESSED
+        Prefix: firehose/
+        RoleARN: !GetAtt deliveryRole.Arn
+  deliveryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref 'AWS::AccountId'
+  deliveryPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: firehose_delivery_policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:AbortMultipartUpload'
+              - 's3:GetBucketLocation'
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:ListBucketMultipartUploads'
+              - 's3:PutObject'
+            Resource:
+              - !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - Fn::ImportValue:
+                      !Sub "${S3ProcessorStackName}-S3Bucket"
+              - !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - Fn::ImportValue:
+                      !Sub "${S3ProcessorStackName}-S3Bucket"
+                  - '*'
+      Roles:
+        - !Ref deliveryRole
