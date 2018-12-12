@@ -181,5 +181,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
+cloudformation/src
 src/modules/

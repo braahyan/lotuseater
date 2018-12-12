@@ -8,7 +8,6 @@ sys.path.append("modules")
 import pymysql.cursors
 import requests
 
-from sqlalchemy.schema import CreateSchema
 from sqlalchemy import Column, String, Numeric, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -18,8 +17,8 @@ Base = declarative_base()
 class Sample(Base):
     __tablename__ = 'samples'
     timestamp = Column(Numeric, primary_key=True)
-    value = Column(String, primary_key=True)
-    device_id = Column(String, primary_key=True)
+    value = Column(String(50), primary_key=True)
+    device_id = Column(String(50), primary_key=True)
     data = Column(Numeric)
 
 
@@ -82,17 +81,23 @@ def s3_handler(event, context):
     print("Opening db connection")
     print(requests.get("https://thrivehive.com"))
     try:
+        client = boto3.client('secretsmanager')
+        response = client.get_secret_value(
+            SecretId=os.environ.get('DB_CREDENTIALS')
+        )
+        creds = json.loads(response['SecretString'])
         engine = create_engine('mysql+pymysql://' +
-                               os.environ.get('DB_USERNAME') +
+                               creds['username'] +
                                ':' +
-                               os.environ.get('DB_PASSWORD') +
+                               creds['password'] +
                                '@' +
                                os.environ.get('DB_ENDPOINT') +
                                ':' +
                                os.environ.get('DB_PORT') +
                                '/' +
                                os.environ.get('DB_NAME'))
-        engine.execute(CreateSchema('my_schema'))
+        Base.metadata.create_all(engine)
+
 
     finally:
         print("foo")

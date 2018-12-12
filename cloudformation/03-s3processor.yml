@@ -24,6 +24,14 @@ Resources:
                 - "ec2:DeleteNetworkInterface"
               Effect: Allow
               Resource: "*"
+        - Version: '2012-10-17'
+          Statement:
+            - Action:
+                - secretsmanager:GetSecretValue
+              Effect: Allow
+              Resource:
+                Fn::ImportValue:
+                  !Sub "${DBStackName}-DatabaseCredentials"
       VpcConfig:
         SubnetIds:
           - Fn::ImportValue:
@@ -38,20 +46,9 @@ Resources:
           DB_NAME:
             Fn::ImportValue:
               !Sub "${DBStackName}-DatabaseName"
-          DB_USERNAME:
-            Fn::Join:
-              - ''
-              - - '{{resolve:secretsmanager:'
-                - Fn::ImportValue:
-                    !Sub "${DBStackName}-DatabaseCredentials"
-                - ':SecretString:username}}'
-          DB_PASSWORD:
-            Fn::Join:
-              - ''
-              - - '{{resolve:secretsmanager:'
-                - Fn::ImportValue:
-                    !Sub "${DBStackName}-DatabaseCredentials"
-                - ':SecretString:password}}'
+          DB_CREDENTIALS:
+            Fn::ImportValue:
+              !Sub "${DBStackName}-DatabaseCredentials"
           DB_ENDPOINT:
             Fn::ImportValue:
               !Sub "${DBStackName}-DatabaseEndpoint"
