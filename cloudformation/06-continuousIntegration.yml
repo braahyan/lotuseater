@@ -149,6 +149,8 @@ Resources:
             Resource:
             - !Join [ '', [ 'arn:aws:logs:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':log-group:/aws/codebuild/', !Ref "AWS::StackName"] ]
             - !Join [ '', [ 'arn:aws:logs:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':log-group:/aws/codebuild/', !Ref "AWS::StackName",':*'] ]
+            - !Join [ '', [ 'arn:aws:logs:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':log-group:/aws/codebuild/', !Ref "AWS::StackName",'2'] ]
+            - !Join [ '', [ 'arn:aws:logs:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':log-group:/aws/codebuild/', !Ref "AWS::StackName",'2',':*'] ]
             Action:
             - logs:CreateLogGroup
             - logs:CreateLogStream
