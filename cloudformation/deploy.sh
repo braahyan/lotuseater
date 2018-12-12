@@ -6,6 +6,7 @@ aurora="02-aurora"
 s3processor="03-s3processor"
 kinesis="04-kinesis"
 kinesisCollector="05-kinesisCollector"
+continuousIntegration="06-continuousIntegration"
 
 mkdir -p ../src/modules
 if [[ $1 = "package" ]]; then
@@ -53,6 +54,12 @@ sam deploy --template-file ./packaged.yaml \
            --capabilities CAPABILITY_IAM \
            --no-fail-on-empty-changeset \
            --parameter-overrides KinesisStreamStackName="A$kinesis"
+
+sam deploy --template-file "$continuousIntegration.yml" \
+           --stack-name "A$continuousIntegration" \
+           --capabilities CAPABILITY_IAM \
+           --no-fail-on-empty-changeset
+
 rm -rf packaged.yaml
 
 rm -rf /src/modules
