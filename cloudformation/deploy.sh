@@ -57,8 +57,12 @@ sam deploy --template-file ./packaged.yaml \
 
 sam deploy --template-file "$continuousIntegration.yml" \
            --stack-name "A$continuousIntegration" \
-           --capabilities CAPABILITY_IAM \
-           --no-fail-on-empty-changeset
+           --capabilities CAPABILITY_NAMED_IAM  \
+           --no-fail-on-empty-changeset \
+           --parameter-overrides NotificationEmail="pedlar.bryan@gmail.com" \
+                                 RepoOwner="braahyan" \
+                                 RepoName="lotuseater" \
+                                 RepoBranchName="master"
 
 rm -rf packaged.yaml
 

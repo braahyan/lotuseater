@@ -8,8 +8,6 @@ Parameters:
     Type: String
   NotificationEmail:
     Type: String
-  ApplicationStackName:
-    Type: String
 Resources:
   pipelinerole:
     Type: AWS::IAM::Role
@@ -170,7 +168,7 @@ Resources:
         Type: CODEPIPELINE
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: !Sub "625145844135.dkr.ecr.${AWS::Region}.amazonaws.com/codebuild"
+        Image: aws/codebuild/python:3.6.5
         Type: LINUX_CONTAINER
       Name: !Ref "AWS::StackName"
       ServiceRole: !Ref codebuildrole
@@ -180,11 +178,11 @@ Resources:
           phases:
             build:
               commands:
-                - pip install -r ../src/requirements.txt -t ../src/modules
+                - pip install -r src/requirements.txt -t src/modules
 
           artifacts:
             files:
-              - target/graderWeb*.jar
+              - src/**/*
         Type: CODEPIPELINE
   pipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -209,6 +207,7 @@ Resources:
             Owner: !Ref RepoOwner
             PollForSourceChanges: 'true'
             Repo: !Ref RepoName
+            OAuthToken: !Join ['', ['{{resolve:secretsmanager:', GithubSecret, ':SecretString:oauth_key}}' ]]
           OutputArtifacts:
           - Name: MyApp
           InputArtifacts: []
@@ -229,8 +228,6 @@ Resources:
           - Name: MyApp
   s3bucketPipeline:
     Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Ref AWS::StackName
   pipelinetopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -273,16 +270,16 @@ Resources:
           Resource: !Ref pipelinetopic
       Topics:
       - !Ref pipelinetopic
-#  githubwebhook:
-#    Type: "AWS::CodePipeline::Webhook"
-#    Properties:
-#      AuthenticationConfiguration:
-#        SecretToken: !Ref RepoOAuthAccessToken
-#      Filters:
-#      - JsonPath: "$.ref"
-#        MatchEquals: refs/heads/{Branch}
-#      Authentication: GITHUB_HMAC
-#      TargetPipeline: !Ref pipeline
-#      TargetAction: Source
-#      TargetPipelineVersion: !GetAtt [pipeline, Version]
-#      RegisterWithThirdParty: True
+  githubwebhook:
+    Type: "AWS::CodePipeline::Webhook"
+    Properties:
+      AuthenticationConfiguration:
+        SecretToken: !Join ['', ['{{resolve:secretsmanager:', GithubSecret, ':SecretString:oauth_key}}' ]]
+      Filters:
+      - JsonPath: "$.ref"
+        MatchEquals: refs/heads/{Branch}
+      Authentication: GITHUB_HMAC
+      TargetPipeline: !Ref pipeline
+      TargetAction: Source
+      TargetPipelineVersion: !GetAtt [pipeline, Version]
+      RegisterWithThirdParty: True
