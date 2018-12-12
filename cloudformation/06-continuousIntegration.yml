@@ -233,7 +233,7 @@ Resources:
       - Name: Deploy
         Actions:
         - Name: DeployApplication
-          RunOrder: 2
+          RunOrder: 3
           InputArtifacts:
               - Name: MyAppBuild
           ActionTypeId:
@@ -244,6 +244,7 @@ Resources:
           Configuration:
               ApplicationName: !Ref CodeDeployApplication
               DeploymentGroupName: !Ref AppDeploymentGroup
+
   s3bucketPipeline:
     Type: AWS::S3::Bucket
   pipelinetopic:
