@@ -187,6 +187,31 @@ Resources:
           artifacts:
             files:
               - src/**/*
+            discard-paths: yes
+        Type: CODEPIPELINE
+  codebuild2:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/python:3.6.5
+        Type: LINUX_CONTAINER
+      Name: !Join ["",[!Ref "AWS::StackName", "2"]]
+      ServiceRole: !Ref codebuildrole
+      Source:
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - pip install -r src/requirements.txt -t src/modules
+
+          artifacts:
+            files:
+              - cloudformation/*.yml
+            discard-paths: yes
         Type: CODEPIPELINE
   pipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -230,20 +255,34 @@ Resources:
           - Name: MyAppBuild
           InputArtifacts:
           - Name: MyApp
+        - Name: CodeBuild2
+          ActionTypeId:
+            Category: Build
+            Owner: AWS
+            Provider: CodeBuild
+            Version: '1'
+          RunOrder: 1
+          Configuration:
+            ProjectName: !Ref codebuild2
+          OutputArtifacts:
+            - Name: MyAppCFNNetwork
+          InputArtifacts:
+            - Name: MyApp
       - Name: Deploy
         Actions:
         - Name: DeployApplication
           RunOrder: 3
           InputArtifacts:
-              - Name: MyAppBuild
+              - Name: MyAppCFNNetwork
           ActionTypeId:
               Category: Deploy
               Owner: AWS
               Version: 1
-              Provider: CodeDeploy
+              Provider: CloudFormation
           Configuration:
-              ApplicationName: !Ref CodeDeployApplication
-              DeploymentGroupName: !Ref AppDeploymentGroup
+              ActionMode: CREATE_UPDATE
+              StackName: A00-network
+              TemplatePath: "MyAppCFNNetwork::00-network.yml"
 
   s3bucketPipeline:
     Type: AWS::S3::Bucket
@@ -302,16 +341,3 @@ Resources:
       TargetAction: Source
       TargetPipelineVersion: !GetAtt [pipeline, Version]
       RegisterWithThirdParty: True
-  CodeDeployApplication:
-    Type: AWS::CodeDeploy::Application
-    Properties:
-      ComputePlatform: Lambda
-  AppDeploymentGroup:
-    Type: AWS::CodeDeploy::DeploymentGroup
-    Properties:
-      DeploymentConfigName: CodeDeployDefault.LambdaAllAtOnce
-      DeploymentStyle:
-        DeploymentOption: WITH_TRAFFIC_CONTROL
-        DeploymentType: BLUE_GREEN
-      ApplicationName: !Ref CodeDeployApplication
-      ServiceRoleArn: !GetAtt [pipelinerole, Arn]
