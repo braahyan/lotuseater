@@ -28,6 +28,10 @@ Resources:
           Principal:
             Service: cloudformation.amazonaws.com
           Action: sts:AssumeRole
+        - Effect: Allow
+          Principal:
+            Service: codedeploy.amazonaws.com
+          Action: sts:AssumeRole
       Policies:
       - PolicyName: pipeline-policy
         PolicyDocument:
@@ -226,6 +230,18 @@ Resources:
           - Name: MyAppBuild
           InputArtifacts:
           - Name: MyApp
+        - Name: DeployApplication
+          RunOrder: 2
+          InputArtifacts:
+              - Name: MyAppBuild
+          ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Version: 1
+              Provider: CodeDeploy
+          Configuration:
+              ApplicationName: !Ref CodeDeployApplication
+              DeploymentGroupName: !Ref AppDeploymentGroup
   s3bucketPipeline:
     Type: AWS::S3::Bucket
   pipelinetopic:
@@ -283,3 +299,16 @@ Resources:
       TargetAction: Source
       TargetPipelineVersion: !GetAtt [pipeline, Version]
       RegisterWithThirdParty: True
+  CodeDeployApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ComputePlatform: Lambda
+  AppDeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      DeploymentConfigName: CodeDeployDefault.LambdaAllAtOnce
+      DeploymentStyle:
+        DeploymentOption: WITH_TRAFFIC_CONTROL
+        DeploymentType: BLUE_GREEN
+      ApplicationName: !Ref CodeDeployApplication
+      ServiceRoleArn: !GetAtt [pipelinerole, Arn]
