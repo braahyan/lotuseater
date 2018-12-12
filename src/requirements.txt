@@ -1,2 +1,4 @@
-PyMySQL
 requests
+sqlalchemy
+alembic
+PyMySQL

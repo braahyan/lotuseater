@@ -5,7 +5,36 @@ Parameters:
     Type: String
   SecurityGroupStackName:
     Type: String
+  DatabaseName:
+    Type: String
+    Default: 'test'
 Resources:
+  MyRDSSecret:
+    Type: "AWS::SecretsManager::Secret"
+    Properties:
+      Description: "This is a Secrets Manager secret for an RDS DB instance"
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "admin"}'
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\'
+  myKey:
+    Type: AWS::KMS::Key
+    Properties:
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: key-default-1
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+            Action: 'kms:*'
+            Resource: '*'
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
@@ -20,10 +49,31 @@ Resources:
     Properties:
       DBSubnetGroupName: !Ref DBSubnetGroup
       Engine: "aurora"
-      DatabaseName: test
-      MasterUsername: root
-      MasterUserPassword: password
+      DatabaseName: !Ref DatabaseName
+      MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref MyRDSSecret, ':SecretString:username}}' ]]
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref MyRDSSecret, ':SecretString:password}}' ]]
       EngineMode: serverless
       VpcSecurityGroupIds:
         - Fn::ImportValue:
             !Sub "${SecurityGroupStackName}-DatabaseAccessSecurityGroup"
+Outputs:
+  DatabaseEndpoint:
+    Value: !GetAtt "DBCluster.Endpoint.Address"
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DatabaseEndpoint"
+  DatabasePort:
+    Value: !GetAtt "DBCluster.Endpoint.Port"
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DatabasePort"
+  DatabaseCredentialsSecret:
+    Value: !Ref MyRDSSecret
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DatabaseCredentials"
+  DatabaseName:
+    Value: !Ref DatabaseName
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DatabaseName"

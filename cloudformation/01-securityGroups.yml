@@ -11,6 +11,12 @@ Resources:
       VpcId:
         Fn::ImportValue:
           !Sub "${NetworkStackName}-VPC"
+  DBACcessIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      SourceSecurityGroupId: !Ref DatabaseAccessSecurityGroup
+      GroupId: !Ref DatabaseAccessSecurityGroup
+      IpProtocol: -1
 Outputs:
   DatabaseAccessSecurityGroup:
     Description: The subnet ID to use for public web servers

@@ -8,7 +8,9 @@ kinesis="04-kinesis"
 kinesisCollector="05-kinesisCollector"
 
 mkdir -p ../src/modules
-pip install -r ../src/requirements.txt -t ../src/modules
+if [[ $1 = "package" ]]; then
+    pip install -r ../src/requirements.txt -t ../src/modules
+fi
 
 sam deploy --template-file "$NETWORK.yml" \
            --stack-name "A$NETWORK" \
@@ -31,7 +33,10 @@ sam package --template-file "$s3processor.yml" \
 sam deploy --template-file ./packaged.yaml \
            --stack-name "A$s3processor" \
            --capabilities CAPABILITY_IAM \
-           --no-fail-on-empty-changeset
+           --no-fail-on-empty-changeset \
+           --parameter-overrides NetworkStackName="A$NETWORK" \
+                                 SecurityGroupStackName=A"$security_groups" \
+                                 DBStackName="A$aurora"
 rm -rf packaged.yaml
 
 sam deploy --template-file "$kinesis.yml" \

@@ -8,6 +8,20 @@ sys.path.append("modules")
 import pymysql.cursors
 import requests
 
+from sqlalchemy.schema import CreateSchema
+from sqlalchemy import Column, String, Numeric, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+
+class Sample(Base):
+    __tablename__ = 'samples'
+    timestamp = Column(Numeric, primary_key=True)
+    value = Column(String, primary_key=True)
+    device_id = Column(String, primary_key=True)
+    data = Column(Numeric)
+
 
 def handler(event, context):
     """ Lambda entrypoint """
@@ -68,20 +82,20 @@ def s3_handler(event, context):
     print("Opening db connection")
     print(requests.get("https://thrivehive.com"))
     try:
-        connection = pymysql.connect(host=os.environ.get('AURORA_ENDPOINT'),
-                                     user=os.environ.get('DATABASE_USERNAME'),
-                                     password=os.environ.get('DATABASE_PASSWORD'),
-                                     db=os.environ.get('DATABASE_NAME'),
-                                     charset='utf8mb4',
-                                     cursorclass=pymysql.cursors.DictCursor)
-        with connection.cursor() as cursor:
-            # Read a single record
-            sql = "SELECT now()"
-            cursor.execute(sql)
-            result = cursor.fetchone()
-            print(result)
+        engine = create_engine('mysql+pymysql://' +
+                               os.environ.get('DB_USERNAME') +
+                               ':' +
+                               os.environ.get('DB_PASSWORD') +
+                               '@' +
+                               os.environ.get('DB_ENDPOINT') +
+                               ':' +
+                               os.environ.get('DB_PORT') +
+                               '/' +
+                               os.environ.get('DB_NAME'))
+        engine.execute(CreateSchema('my_schema'))
+
     finally:
-        connection.close()
+        print("foo")
     print("doing a thing")
     # Connect to the database
     for record in event['Records']:
