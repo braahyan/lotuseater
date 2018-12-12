@@ -310,13 +310,6 @@ Resources:
     Type: AWS::CodeDeploy::DeploymentGroup
     Properties:
       DeploymentConfigName: CodeDeployDefault.LambdaAllAtOnce
-      #Deployment:
-      #  Revision:
-      #    RevisionType: S3
-      #    S3Location:
-      #      Bucket: !Ref s3bucketPipeline
-      #      BundleType: YAML
-      #      Key: foo
       DeploymentStyle:
         DeploymentOption: WITH_TRAFFIC_CONTROL
         DeploymentType: BLUE_GREEN
