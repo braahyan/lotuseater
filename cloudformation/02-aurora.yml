@@ -28,11 +28,7 @@ Resources:
           - Sid: Enable IAM User Permissions
             Effect: Allow
             Principal:
-              AWS: !Join
-                - ''
-                - - 'arn:aws:iam::'
-                  - !Ref 'AWS::AccountId'
-                  - ':role/*'
+              AWS: !Ref 'AWS::AccountId'
             Action: 'kms:*'
             Resource: '*'
   DBSubnetGroup:
