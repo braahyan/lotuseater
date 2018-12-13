@@ -222,18 +222,18 @@ Resources:
       Source:
         BuildSpec:
             Fn::Join:
-                - "\n"
+                - ""
                 - - |
-                     version: 0.2
-                     artifacts:
-                       files:
-                         - '**/*'
-                     phases:
-                       build:
-                         commands:
-                           - pip install -r src/requirements.txt -t src/modules{% for stackInfo in stacks %}{% if 'SAM' in stackInfo['name'] %}
-                           - sam package --template-file {{ stackInfo['name'] }} --s3-bucket mybucket --output-template-file {{ stackInfo['name'] }}{% endif %}{% endfor %}
-
+                         version: 0.2
+                         artifacts:
+                           files:
+                             - '**/*'
+                         phases:
+                           build:
+                             commands:
+                               - pip install -r src/requirements.txt -t src/modules{% for stackInfo in stacks %}{% if 'SAM' in stackInfo['name'] %}
+                  -  Fn::Sub:
+                        "\n      - aws cloudformation package --template-file {{ stackInfo['name'] }} --s3-bucket ${s3bucketPipeline} --output-template-file {{ stackInfo['name'] }}"{% endif %}{% endfor %}
         Type: CODEPIPELINE
 {% raw %}
   pipeline:
