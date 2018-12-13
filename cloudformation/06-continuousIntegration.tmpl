@@ -262,7 +262,8 @@ Resources:
           Actions:
 {% endraw %}
 
-        {% for stack in stacks %}
+        {% for stackInfo in stacks %}
+            {% set stack = stackInfo['name'] %}
             - Name: DeployApplication-{{ stack }}
               RunOrder: {{ loop.index + 1 }}
               InputArtifacts:
@@ -276,6 +277,9 @@ Resources:
                 ActionMode: CREATE_UPDATE
                 StackName: A{{ stack | replace('.yml','') }}
                 TemplatePath: "MyAppBuild::cloudformation/{{ stack }}"
+                {% if stackInfo.cfg %}
+                TemplateConfigurationPath:"MyAppBuild::cloudformation/{{ stack | replace('.yml', '.cfg') }}"
+                {% endif %}
                 RoleArn: !GetAtt [pipelinerole, Arn]
         {% endfor %}
 {% raw %}
