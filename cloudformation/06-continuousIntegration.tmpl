@@ -233,7 +233,7 @@ Resources:
                              commands:
                                - pip install -r src/requirements.txt -t src/modules{% for stackInfo in stacks %}{% if 'SAM' in stackInfo['name'] %}
                   -  Fn::Sub:
-                        "\n      - aws cloudformation package --template-file {{ stackInfo['name'] }} --s3-bucket ${s3bucketPipeline} --output-template-file {{ stackInfo['name'] }}"{% endif %}{% endfor %}
+                        "\n      - aws cloudformation package --template-file cloudformation/{{ stackInfo['name'] }} --s3-bucket ${s3bucketPipeline} --output-template-file cloudformation/{{ stackInfo['name'] }}"{% endif %}{% endfor %}
         Type: CODEPIPELINE
 {% raw %}
   pipeline:
