@@ -30,8 +30,9 @@ Resources:
           - Sid: Enable IAM User Permissions
             Effect: Allow
             Principal:
-              AWS: Fn::ImportValue:
-                     !Sub "${PipelineStackName}-PipelineRoleArn"
+              AWS:
+                Fn::ImportValue:
+                  !Sub "${PipelineStackName}-PipelineRoleArn"
             Action: 'kms:*'
             Resource: '*'
   DBSubnetGroup:
