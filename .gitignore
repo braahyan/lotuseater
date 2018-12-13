@@ -183,3 +183,4 @@ dmypy.json
 .pyre/
 cloudformation/src
 src/modules/
+06-continuousIntegration.yml
