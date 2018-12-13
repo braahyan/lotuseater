@@ -132,6 +132,8 @@ Resources:
               - Effect: Allow
                 Action:
                   - secretsmanager:GetRandomPassword
+                  - secretsmanager:CreateSecret
+                  - secretsmanager:DeleteSecret
                 Resource: '*'
             Version: 2012-10-17
   CodePipelineCloudFormationRole:
