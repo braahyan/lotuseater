@@ -134,6 +134,8 @@ Resources:
                   - secretsmanager:GetRandomPassword
                   - secretsmanager:CreateSecret
                   - secretsmanager:DeleteSecret
+                  - secretsmanager:TagResource
+                  - secretsmanager:GetSecretValue
                 Resource: '*'
             Version: 2012-10-17
   CodePipelineCloudFormationRole:
