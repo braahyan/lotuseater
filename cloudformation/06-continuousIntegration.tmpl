@@ -274,7 +274,7 @@ Resources:
                 Provider: CloudFormation
               Configuration:
                 ActionMode: CREATE_UPDATE
-                StackName: A{{ stack }}
+                StackName: A{{ stack | replace('.yml','') }}
                 TemplatePath: "MyAppBuild::cloudformation/{{ stack }}"
                 RoleArn: !GetAtt [pipelinerole, Arn]
         {% endfor %}
