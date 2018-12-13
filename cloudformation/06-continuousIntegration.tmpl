@@ -206,6 +206,8 @@ Resources:
                 Action:
                   - ssm:GetParameters
                 Resource: !Join ['', ['arn:aws:ssm:', !Ref 'AWS::Region', ":", !Ref 'AWS::AccountId', ":parameter/CodeBuild/*"]]
+{% endraw %}
+
   codebuild:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -218,16 +220,22 @@ Resources:
       Name: !Ref "AWS::StackName"
       ServiceRole: !Ref codebuildrole
       Source:
-        BuildSpec: |
-          version: 0.2
-          phases:
-            build:
-              commands:
-                - pip install -r src/requirements.txt -t src/modules
-          artifacts:
-            files:
-              - '**/*'
+        BuildSpec:
+            Fn::Join:
+                - "\n"
+                - - |
+                     version: 0.2
+                     artifacts:
+                       files:
+                         - '**/*'
+                     phases:
+                       build:
+                         commands:
+                           - pip install -r src/requirements.txt -t src/modules{% for stackInfo in stacks %}{% if 'SAM' in stackInfo['name'] %}
+                           - sam package --template-file {{ stackInfo['name'] }} --s3-bucket mybucket --output-template-file {{ stackInfo['name'] }}{% endif %}{% endfor %}
+
         Type: CODEPIPELINE
+{% raw %}
   pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -291,6 +299,7 @@ Resources:
                 TemplatePath: "MyAppBuild::cloudformation/{{ stack }}"{% if stackInfo.cfg %}
                 TemplateConfiguration: "MyAppBuild::cloudformation/{{ stack | replace('.yml', '.cfg') }}"{% endif %}
                 RoleArn: !GetAtt [pipelinerole, Arn]
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
         {% endfor %}
 {% raw %}
   s3bucketPipeline:
