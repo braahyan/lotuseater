@@ -79,11 +79,12 @@ Resources:
                   - ecs:*
                   - iam:PassRole
                   - dynamodb:*
+                  - iam:*
+                  - s3:*
                 Resource: '*'
                 Effect: Allow
               - Action:
-                  - lambda:InvokeFunction
-                  - lambda:ListFunctions
+                  - lambda:*
                 Resource: '*'
                 Effect: Allow
               - Action:
