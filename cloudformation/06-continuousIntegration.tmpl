@@ -257,7 +257,7 @@ Resources:
               Configuration:
                 Branch: !Ref RepoBranchName
                 Owner: !Ref RepoOwner
-                PollForSourceChanges: 'true'
+                PollForSourceChanges: 'false'
                 Repo: !Ref RepoName
                 OAuthToken: !Join ['', ['{{resolve:secretsmanager:', GithubSecret, ':SecretString:oauth_key}}' ]]
               OutputArtifacts:
