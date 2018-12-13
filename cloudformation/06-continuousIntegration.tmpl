@@ -125,6 +125,14 @@ Resources:
                   - devicefarm:CreateUpload
                   - devicefarm:ScheduleRun
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - kms:CreateKey
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetRandomPassword
+                Resource: '*'
             Version: 2012-10-17
   CodePipelineCloudFormationRole:
     Type: AWS::IAM::Role

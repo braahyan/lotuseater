@@ -32,7 +32,7 @@ Resources:
                 - ''
                 - - 'arn:aws:iam::'
                   - !Ref 'AWS::AccountId'
-                  - ':root'
+                  - ':*'
             Action: 'kms:*'
             Resource: '*'
   DBSubnetGroup:

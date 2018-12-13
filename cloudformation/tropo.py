@@ -4,7 +4,7 @@ from os.path import isfile, join
 TEMPLATE_FILE_NOEX = "06-continuousIntegration"
 TEMPLATE_FILE = TEMPLATE_FILE_NOEX + ".tmpl"
 onlyfiles = [f for f in listdir(".") if
-             isfile(join(".", f)) and f.find(".yml") >= 0]
+             isfile(join(".", f)) and f.find(".yml") >= 0 and f.find(TEMPLATE_FILE_NOEX) != 0]
 allstuff = [{"name": f, "cfg": isfile(f.replace(".yml",".cfg"))} for f in onlyfiles]
 print(onlyfiles)
 
