@@ -349,3 +349,10 @@ Resources:
       TargetPipelineVersion: !GetAtt [pipeline, Version]
       RegisterWithThirdParty: True
 {% endraw %}
+
+Outputs:
+  PipelineRoleArn:
+    Value: !GetAtt "pipelinerole.Arn"
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-PipelineRoleArn"

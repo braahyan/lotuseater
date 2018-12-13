@@ -8,6 +8,8 @@ Parameters:
   DatabaseName:
     Type: String
     Default: 'test'
+  PipelineStackName:
+    Type: String
 Resources:
   MyRDSSecret:
     Type: "AWS::SecretsManager::Secret"
@@ -28,7 +30,8 @@ Resources:
           - Sid: Enable IAM User Permissions
             Effect: Allow
             Principal:
-              AWS: !Ref 'AWS::AccountId'
+              AWS: Fn::ImportValue:
+                     !Sub "${PipelineStackName}-PipelineRoleArn"
             Action: 'kms:*'
             Resource: '*'
   DBSubnetGroup:
