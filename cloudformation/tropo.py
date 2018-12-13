@@ -13,7 +13,7 @@ import jinja2
 templateLoader = jinja2.FileSystemLoader(searchpath="./")
 templateEnv = jinja2.Environment(loader=templateLoader)
 template = templateEnv.get_template(TEMPLATE_FILE)
-outputText = template.render(stacks=onlyfiles)  # this is where to put args to the template renderer
+outputText = template.render(stacks=allstuff)  # this is where to put args to the template renderer
 
 with open('./06-continuousIntegration.yml', 'w') as f:
     f.write(outputText)

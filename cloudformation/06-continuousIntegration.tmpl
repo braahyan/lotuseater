@@ -276,10 +276,8 @@ Resources:
               Configuration:
                 ActionMode: CREATE_UPDATE
                 StackName: A{{ stack | replace('.yml','') }}
-                TemplatePath: "MyAppBuild::cloudformation/{{ stack }}"
-                {% if stackInfo.cfg %}
-                TemplateConfigurationPath:"MyAppBuild::cloudformation/{{ stack | replace('.yml', '.cfg') }}"
-                {% endif %}
+                TemplatePath: "MyAppBuild::cloudformation/{{ stack }}"{% if stackInfo.cfg %}
+                TemplateConfiguration: "MyAppBuild::cloudformation/{{ stack | replace('.yml', '.cfg') }}"{% endif %}
                 RoleArn: !GetAtt [pipelinerole, Arn]
         {% endfor %}
 {% raw %}
