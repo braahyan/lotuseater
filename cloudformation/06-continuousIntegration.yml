@@ -1,0 +1,428 @@
+AWSTemplateFormatVersion: 2010-09-09
+Outputs:
+  PipelineRoleArn:
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-PipelineRoleArn
+    Value:
+      Fn::GetAtt:
+      - pipelinerole
+      - Arn
+  StackName:
+    Value:
+      Ref: AWS::StackName
+Parameters:
+  NotificationEmail:
+    Type: String
+  RepoBranchName:
+    Type: String
+  RepoName:
+    Type: String
+  RepoOwner:
+    Type: String
+Resources:
+  CodePipelineCloudFormationRole:
+    Properties:
+      AssumeRolePolicyDocument: "{\n    \"Statement\": [{\n        \"Action\": \"\
+        sts:AssumeRole\",\n        \"Effect\": \"Allow\",\n        \"Principal\":\
+        \ {\n            \"Service\": \"cloudformation.amazonaws.com\"\n        }\n\
+        \    }]\n}\n"
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Fn::Sub: "{\n    \"Statement\": [{\n            \"Effect\": \"Allow\",\n\
+            \            \"Action\": [ \"*\" ],\n            \"Resource\": \"*\"\n\
+            \    }]\n}\n"
+        PolicyName:
+          Fn::Sub: ${AWS::StackName}-CloudFormation-${AWS::Region}
+      RoleName:
+        Fn::Sub: ${AWS::StackName}-CloudFormation-${AWS::Region}
+    Type: AWS::IAM::Role
+  buildeventmonitor:
+    Properties:
+      EventPattern:
+        detail:
+          pipeline:
+          - Ref: pipeline
+        detail-type:
+        - CodePipeline Pipeline Execution State Change
+        source:
+        - aws.codepipeline
+      Name:
+        Fn::Join:
+        - ''
+        - - Ref: AWS::StackName
+          - -notificationmonitor
+      Targets:
+      - Arn:
+          Ref: pipelinetopic
+        Id:
+          Ref: AWS::StackName
+    Type: AWS::Events::Rule
+  codebuild:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/python:3.6.5
+        Type: LINUX_CONTAINER
+      Name:
+        Ref: AWS::StackName
+      ServiceRole:
+        Ref: codebuildrole
+      Source:
+        BuildSpec:
+          Fn::Join:
+          - ''
+          - - "version: 0.2\nartifacts:\n  files:\n    - '**/*'\nphases:\n  build:\n\
+              \    commands:\n      - pip install -r src/requirements.txt -t src/modules\n"
+            - Fn::Sub: "\n      - aws cloudformation package --template-file cloudformation/overstack.yml\
+                \ --s3-bucket ${s3bucketPipeline} --output-template-file cloudformation/overstack.packaged.yaml"
+        Type: CODEPIPELINE
+    Type: AWS::CodeBuild::Project
+  codebuildrole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+        Version: 2012-10-17
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Effect: Allow
+            Resource:
+            - Fn::Join:
+              - ''
+              - - 'arn:aws:logs:'
+                - Ref: AWS::Region
+                - ':'
+                - Ref: AWS::AccountId
+                - :log-group:/aws/codebuild/
+                - Ref: AWS::StackName
+            - Fn::Join:
+              - ''
+              - - 'arn:aws:logs:'
+                - Ref: AWS::Region
+                - ':'
+                - Ref: AWS::AccountId
+                - :log-group:/aws/codebuild/
+                - Ref: AWS::StackName
+                - :*
+            - Fn::Join:
+              - ''
+              - - 'arn:aws:logs:'
+                - Ref: AWS::Region
+                - ':'
+                - Ref: AWS::AccountId
+                - :log-group:/aws/codebuild/
+                - Ref: AWS::StackName
+                - '2'
+            - Fn::Join:
+              - ''
+              - - 'arn:aws:logs:'
+                - Ref: AWS::Region
+                - ':'
+                - Ref: AWS::AccountId
+                - :log-group:/aws/codebuild/
+                - Ref: AWS::StackName
+                - '2'
+                - :*
+          - Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:GetObjectVersion
+            Effect: Allow
+            Resource:
+            - Fn::GetAtt:
+              - s3bucketPipeline
+              - Arn
+            - Fn::Join:
+              - ''
+              - - Fn::GetAtt:
+                  - s3bucketPipeline
+                  - Arn
+                - '*'
+          - Action:
+            - ssm:GetParameters
+            Effect: Allow
+            Resource:
+              Fn::Join:
+              - ''
+              - - 'arn:aws:ssm:'
+                - Ref: AWS::Region
+                - ':'
+                - Ref: AWS::AccountId
+                - :parameter/CodeBuild/*
+          Version: 2012-10-17
+        PolicyName: CodeBuild
+      RoleName:
+        Fn::Join:
+        - ''
+        - - Ref: AWS::StackName
+          - -cloudbuildrole
+    Type: AWS::IAM::Role
+  githubwebhook:
+    Properties:
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken:
+          Fn::Join:
+          - ''
+          - - '{{resolve:secretsmanager:'
+            - GithubSecret
+            - :SecretString:oauth_key}}
+      Filters:
+      - JsonPath: $.ref
+        MatchEquals: refs/heads/{Branch}
+      RegisterWithThirdParty: true
+      TargetAction: Source
+      TargetPipeline:
+        Ref: pipeline
+      TargetPipelineVersion:
+        Fn::GetAtt:
+        - pipeline
+        - Version
+    Type: AWS::CodePipeline::Webhook
+  pipeline:
+    Properties:
+      ArtifactStore:
+        Location:
+          Ref: s3bucketPipeline
+        Type: S3
+      Name:
+        Ref: AWS::StackName
+      RoleArn:
+        Fn::GetAtt:
+        - pipelinerole
+        - Arn
+      Stages:
+      - Actions:
+        - ActionTypeId:
+            Category: Source
+            Owner: ThirdParty
+            Provider: GitHub
+            Version: '1'
+          Configuration:
+            Branch:
+              Ref: RepoBranchName
+            OAuthToken:
+              Fn::Join:
+              - ''
+              - - '{{resolve:secretsmanager:'
+                - GithubSecret
+                - :SecretString:oauth_key}}
+            Owner:
+              Ref: RepoOwner
+            PollForSourceChanges: 'false'
+            Repo:
+              Ref: RepoName
+          InputArtifacts: []
+          Name: Source
+          OutputArtifacts:
+          - Name: MyApp
+          RunOrder: 1
+        Name: Source
+      - Actions:
+        - ActionTypeId:
+            Category: Build
+            Owner: AWS
+            Provider: CodeBuild
+            Version: '1'
+          Configuration:
+            ProjectName:
+              Ref: codebuild
+          InputArtifacts:
+          - Name: MyApp
+          Name: CodeBuild
+          OutputArtifacts:
+          - Name: MyAppBuild
+          RunOrder: 1
+        Name: Build
+      - Actions:
+        - ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: 1
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+            RoleArn:
+              Fn::GetAtt:
+              - pipelinerole
+              - Arn
+            StackName: A-OverStack
+            TemplateConfiguration: MyAppBuild::cloudformation/overstack.packaged.yaml.cfg
+            TemplatePath: MyAppBuild::cloudformation/overstack.packaged.yaml
+          InputArtifacts:
+          - Name: MyAppBuild
+          Name: DeployApplication-Overstack
+          RunOrder: 1
+        Name: Deploy-Stacks
+    Type: AWS::CodePipeline::Pipeline
+  pipelinerole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: codepipeline.amazonaws.com
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: cloudformation.amazonaws.com
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: codedeploy.amazonaws.com
+        Version: 2008-10-17
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - s3:GetObject
+            - s3:GetObjectVersion
+            - s3:GetBucketVersioning
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - s3:PutObject
+            Effect: Allow
+            Resource:
+            - arn:aws:s3:::codepipeline*
+            - arn:aws:s3:::elasticbeanstalk*
+          - Action:
+            - codecommit:CancelUploadArchive
+            - codecommit:GetBranch
+            - codecommit:GetCommit
+            - codecommit:GetUploadArchiveStatus
+            - codecommit:UploadArchive
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - codedeploy:CreateDeployment
+            - codedeploy:GetApplicationRevision
+            - codedeploy:GetDeployment
+            - codedeploy:GetDeploymentConfig
+            - codedeploy:RegisterApplicationRevision
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - elasticbeanstalk:*
+            - ec2:*
+            - elasticloadbalancing:*
+            - autoscaling:*
+            - cloudwatch:*
+            - s3:*
+            - sns:*
+            - cloudformation:*
+            - rds:*
+            - sqs:*
+            - ecs:*
+            - iam:PassRole
+            - dynamodb:*
+            - iam:*
+            - s3:*
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - lambda:*
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - opsworks:CreateDeployment
+            - opsworks:DescribeApps
+            - opsworks:DescribeCommands
+            - opsworks:DescribeDeployments
+            - opsworks:DescribeInstances
+            - opsworks:DescribeStacks
+            - opsworks:UpdateApp
+            - opsworks:UpdateStack
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - cloudformation:CreateStack
+            - cloudformation:DeleteStack
+            - cloudformation:DescribeStacks
+            - cloudformation:UpdateStack
+            - cloudformation:CreateChangeSet
+            - cloudformation:DeleteChangeSet
+            - cloudformation:DescribeChangeSet
+            - cloudformation:ExecuteChangeSet
+            - cloudformation:SetStackPolicy
+            - cloudformation:ValidateTemplate
+            - iam:PassRole
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - codebuild:BatchGetBuilds
+            - codebuild:StartBuild
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - devicefarm:ListProjects
+            - devicefarm:ListDevicePools
+            - devicefarm:GetRun
+            - devicefarm:GetUpload
+            - devicefarm:CreateUpload
+            - devicefarm:ScheduleRun
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - kms:CreateKey
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - secretsmanager:GetRandomPassword
+            - secretsmanager:CreateSecret
+            - secretsmanager:DeleteSecret
+            - secretsmanager:TagResource
+            - secretsmanager:GetSecretValue
+            Effect: Allow
+            Resource: '*'
+          Version: 2012-10-17
+        PolicyName: pipeline-policy
+      RoleName:
+        Fn::Join:
+        - ''
+        - - Ref: AWS::StackName
+          - -pipelinerole
+    Type: AWS::IAM::Role
+  pipelinetopic:
+    Properties:
+      DisplayName:
+        Ref: AWS::StackName
+      Subscription:
+      - Endpoint:
+          Ref: NotificationEmail
+        Protocol: email
+      TopicName:
+        Ref: AWS::StackName
+    Type: AWS::SNS::Topic
+  pipelinetopicpolicy:
+    Properties:
+      PolicyDocument:
+        Id: AWSAccountTopicAccess
+        Statement:
+        - Action: sns:Publish
+          Effect: Allow
+          Principal:
+            Service: events.amazonaws.com
+          Resource:
+            Ref: pipelinetopic
+          Sid: TrustCWEToPublishEventsToMyTopic
+        Version: 2012-10-17
+      Topics:
+      - Ref: pipelinetopic
+    Type: AWS::SNS::TopicPolicy
+  s3bucketPipeline:
+    Type: AWS::S3::Bucket
