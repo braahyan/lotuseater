@@ -284,7 +284,7 @@ Resources:
 {% endraw %}
 
             - Name: DeployApplication-Overstack
-              RunOrder: {{ loop.index + 1 }}
+              RunOrder: 1
               InputArtifacts:
                 - Name: MyAppBuild
               ActionTypeId:
