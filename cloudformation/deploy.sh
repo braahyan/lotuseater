@@ -3,9 +3,9 @@
 NETWORK="00-network"
 security_groups="01-securityGroups"
 aurora="02-aurora"
-s3processor="03-aws cloudformations3processor"
+s3processor="03-SAMs3processor"
 kinesis="04-kinesis"
-kinesisCollector="05-aws cloudformationkinesisCollector"
+kinesisCollector="05-SAMkinesisCollector"
 continuousIntegration="06-continuousIntegration"
 bucketName="bryanpedlar-dev"
 
@@ -50,7 +50,7 @@ aws s3api put-object --bucket $bucketName --body $kinesis.packaged.yml --key $ki
 aws s3api put-object --bucket $bucketName --body $kinesisCollector.packaged.yml --key $kinesisCollector.packaged.yml
 aws s3api put-object --bucket $bucketName --body $continuousIntegration.packaged.yml --key $continuousIntegration.packaged.yml
 
-#aws cloudformation deploy --template-file overstack.yml --parameter-overrides BucketName=$bucketName --stack-name overstack3 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
+aws cloudformation deploy --template-file overstack.yml --parameter-overrides BucketName=$bucketName --stack-name overstack3 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
 
 rm -rf *packaged*.yml
 rm -rf /src/modules
