@@ -30,9 +30,7 @@ Resources:
           - Sid: Enable IAM User Permissions
             Effect: Allow
             Principal:
-              AWS:
-                Fn::ImportValue:
-                  !Sub "${PipelineStackName}-PipelineRoleArn"
+              AWS: "*"
             Action: 'kms:*'
             Resource: '*'
   DBSubnetGroup:
@@ -57,6 +55,8 @@ Resources:
         - Fn::ImportValue:
             !Sub "${SecurityGroupStackName}-DatabaseAccessSecurityGroup"
 Outputs:
+  StackName:
+    Value: !Ref AWS::StackName
   DatabaseEndpoint:
     Value: !GetAtt "DBCluster.Endpoint.Address"
     Export:

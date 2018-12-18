@@ -1,39 +1,80 @@
 Transform: 'AWS::Serverless-2016-10-31'
 Parameters:
-  NetworkStackLocation:
-    Type: String
-  SecurityGroupStackLocation:
-    Type: String
-  DatabaseStackLocation:
-    Type: String
-  S3ProcessorStackLocation:
-    Type: String
-  KinesisStackLocation:
-    Type: String
-  KinesisCollectorStackLocation:
+  BucketName:
     Type: String
 Resources:
   Network:
-    Type: AWS::Serverless::Application
+    Type: AWS::CloudFormation::Stack
     Properties:
-      Location: !Ref NetworkStackLocation
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/00-network.packaged.yml"
   SecurityGroups:
-    Type: AWS::Serverless::Application
+    Type: AWS::CloudFormation::Stack
     Properties:
-      Location: !Ref SecurityGroupStackLocation
-  Database:
-    Type: AWS::Serverless::Application
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/01-securityGroups.packaged.yml"
+      Parameters:
+        NetworkStackName:
+          Fn::Select:
+            - 1
+            - !Split [ "/", !Ref Network ]
+  Aurora:
+    Type: AWS::CloudFormation::Stack
     Properties:
-      Location: !Ref DatabaseStackLocation
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/02-aurora.packaged.yml"
+      Parameters:
+        NetworkStackName:
+          Fn::Select:
+            - 1
+            - !Split [ "/", !Ref Network ]
+        SecurityGroupStackName:
+          Fn::Select:
+            - 1
+            - !Split [ "/",!Ref SecurityGroups]
+        DatabaseName: 'test'
+        PipelineStackName:
+          Fn::Select:
+            - 1
+            - !Split [ "/", !Ref Pipeline]
   S3Processor:
-    Type: AWS::Serverless::Application
+    Type: AWS::CloudFormation::Stack
     Properties:
-      Location: !Ref S3ProcessorStackLocation
-  Kinesis:
-    Type: AWS::Serverless::Application
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/03-SAMs3processor.packaged.yml"
+      Parameters:
+        NetworkStackName:
+          Fn::Select:
+            - 1
+            - !Split [ "/", !Ref Network ]
+        SecurityGroupStackName:
+          Fn::Select:
+            - 1
+            - !Split [ "/", !Ref SecurityGroups]
+        DBStackName:
+          Fn::Select:
+            - 1
+            - !Split [ "/", !Ref Aurora]
+  KinesisFirehose:
+    Type: AWS::CloudFormation::Stack
     Properties:
-      Location: !Ref KinesisStackLocation
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/04-kinesis.packaged.yml"
+      Parameters:
+        S3ProcessorStackName:
+          Fn::Select:
+            - 1
+            - !Split [ "/",!Ref S3Processor]
   KinesisCollector:
-    Type: AWS::Serverless::Application
+    Type: AWS::CloudFormation::Stack
     Properties:
-      Location: !Ref KinesisCollectorStackLocation
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/05-SAMkinesisCollector.packaged.yml"
+      Parameters:
+        KinesisStreamStackName:
+          Fn::Select:
+            - 1
+            - !Split [ "/", !Ref KinesisFirehose]
+  Pipeline:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/06-continuousIntegration.packaged.yml"
+      Parameters:
+        RepoOwner: braahyan
+        RepoName: lotuseater
+        RepoBranchName: master
+        NotificationEmail: pedlar.bryan@gmail.com

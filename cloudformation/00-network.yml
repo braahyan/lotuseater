@@ -1,6 +1,8 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: lotuseater
 Outputs:
+  StackName:
+    Value: !Ref AWS::StackName
   PublicSubnet1:
     Description: The subnet ID to use for public web servers
     Value:

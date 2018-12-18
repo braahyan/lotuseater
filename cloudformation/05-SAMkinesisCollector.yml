@@ -30,3 +30,6 @@ Resources:
             Properties:
                 Path: /thumbnail
                 Method: GET
+Outputs:
+  StackName:
+    Value: !Ref AWS::StackName

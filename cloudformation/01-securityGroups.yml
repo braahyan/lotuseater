@@ -18,6 +18,8 @@ Resources:
       GroupId: !Ref DatabaseAccessSecurityGroup
       IpProtocol: -1
 Outputs:
+  StackName:
+    Value: !Ref AWS::StackName
   DatabaseAccessSecurityGroup:
     Description: The subnet ID to use for public web servers
     Value:

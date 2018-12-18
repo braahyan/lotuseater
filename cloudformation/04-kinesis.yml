@@ -4,6 +4,8 @@ Parameters:
   S3ProcessorStackName:
     Type: String
 Outputs:
+  StackName:
+    Value: !Ref AWS::StackName
   DeliveryStreamArn:
     Description: The subnet ID to use for public web servers
     Value: !GetAtt deliverystream.Arn

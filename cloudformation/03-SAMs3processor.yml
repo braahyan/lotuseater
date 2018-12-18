@@ -69,6 +69,8 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 Outputs:
+  StackName:
+    Value: !Ref AWS::StackName
   S3Bucket:
     Description: The subnet ID to use for public web servers
     Value:
