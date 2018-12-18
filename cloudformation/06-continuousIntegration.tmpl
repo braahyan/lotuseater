@@ -232,9 +232,9 @@ Resources:
                          phases:
                            build:
                              commands:
-                               - pip install -r src/requirements.txt -t src/modules{% for stackInfo in stacks %}{% if 'SAM' in stackInfo['name'] %}
+                               - pip install -r src/requirements.txt -t src/modules
                   -  Fn::Sub:
-                        "\n      - aws cloudformation package --template-file cloudformation/{{ stackInfo['name'] }} --s3-bucket ${s3bucketPipeline} --output-template-file cloudformation/{{ stackInfo['name'] }}"{% endif %}{% endfor %}
+                        "\n      - aws cloudformation package --template-file cloudformation/overstack.yaml --s3-bucket ${s3bucketPipeline} --output-template-file cloudformation/overstack.packaged.yaml"
         Type: CODEPIPELINE
 {% raw %}
   pipeline:
@@ -283,9 +283,7 @@ Resources:
           Actions:
 {% endraw %}
 
-        {% for stackInfo in stacks %}
-            {% set stack = stackInfo['name'] %}
-            - Name: DeployApplication-{{ stack }}
+            - Name: DeployApplication-Overstack
               RunOrder: {{ loop.index + 1 }}
               InputArtifacts:
                 - Name: MyAppBuild
@@ -296,12 +294,11 @@ Resources:
                 Provider: CloudFormation
               Configuration:
                 ActionMode: CREATE_UPDATE
-                StackName: A{{ stack | replace('.yml','') }}
-                TemplatePath: "MyAppBuild::cloudformation/{{ stack }}"{% if stackInfo.cfg %}
-                TemplateConfiguration: "MyAppBuild::cloudformation/{{ stack | replace('.yml', '.cfg') }}"{% endif %}
+                StackName: A-OverStack
+                TemplatePath: "MyAppBuild::cloudformation/overstack.packaged.yaml"
+                TemplateConfiguration: "MyAppBuild::cloudformation/overstack.packaged.yaml.cfg"
                 RoleArn: !GetAtt [pipelinerole, Arn]
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
-        {% endfor %}
 {% raw %}
   s3bucketPipeline:
     Type: AWS::S3::Bucket

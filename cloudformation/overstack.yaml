@@ -1,0 +1,39 @@
+Transform: 'AWS::Serverless-2016-10-31'
+Parameters:
+  NetworkStackLocation:
+    Type: String
+  SecurityGroupStackLocation:
+    Type: String
+  DatabaseStackLocation:
+    Type: String
+  S3ProcessorStackLocation:
+    Type: String
+  KinesisStackLocation:
+    Type: String
+  KinesisCollectorStackLocation:
+    Type: String
+Resources:
+  Network:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: !Ref NetworkStackLocation
+  SecurityGroups:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: !Ref SecurityGroupStackLocation
+  Database:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: !Ref DatabaseStackLocation
+  S3Processor:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: !Ref S3ProcessorStackLocation
+  Kinesis:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: !Ref KinesisStackLocation
+  KinesisCollector:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: !Ref KinesisCollectorStackLocation
