@@ -363,6 +363,7 @@ Resources:
           - Action:
             - codebuild:BatchGetBuilds
             - codebuild:StartBuild
+            - codebuild:CreateProject
             Effect: Allow
             Resource: '*'
           - Action:
