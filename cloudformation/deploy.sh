@@ -7,7 +7,7 @@ s3processor="03-SAMs3processor"
 kinesis="04-kinesis"
 kinesisCollector="05-SAMkinesisCollector"
 continuousIntegration="06-continuousIntegration"
-bucketName="bryanpedlar-dev"
+bucketName=$1
 
 mkdir -p ../src/modules
 if [[ $1 = "package" ]]; then
