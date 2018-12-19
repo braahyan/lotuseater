@@ -59,7 +59,7 @@ Resources:
           - ''
           - - "version: 0.2\nartifacts:\n  files:\n    - '**/*'\nphases:\n  build:\n\
               \    commands:"
-            - Fn::Sub: "\n      - cd cloudformation && chmod 755 deploy.sh && ./deploy.sh ${s3bucketPipeline} package"
+            - Fn::Sub: "\n      - cd cloudformation && chmod 755 deploy.sh && ./deploy.sh ${s3bucketPipeline} ${StackName}"
         Type: CODEPIPELINE
     Type: AWS::CodeBuild::Project
   codebuildrole:
@@ -242,7 +242,7 @@ Resources:
               - Arn
             StackName: !Ref StackName
             TemplateConfiguration: MyAppBuild::cloudformation/overstack.cfg
-            TemplatePath: MyAppBuild::cloudformation/overstack.packaged.yaml
+            TemplatePath: MyAppBuild::cloudformation/overstack.yml
           InputArtifacts:
           - Name: MyAppBuild
           Name: DeployApplication-Overstack
