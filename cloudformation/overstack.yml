@@ -22,15 +22,6 @@ Resources:
         Subnet2: !GetAtt Network.Outputs.PrivateSubnet2
         SecurityGroupId: !GetAtt SecurityGroups.Outputs.DatabaseAccessSecurityGroup
         DatabaseName: 'test'
-  Pipeline:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/06-continuousIntegration.packaged.yml"
-      Parameters:
-        RepoOwner: braahyan
-        RepoName: lotuseater
-        RepoBranchName: master
-        NotificationEmail: pedlar.bryan@gmail.com
   S3Processor:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -56,3 +47,13 @@ Resources:
       Parameters:
         KinesisStreamName: !GetAtt KinesisFirehose.Outputs.DeliveryStreamName
         KinesisStreamArn: !GetAtt KinesisFirehose.Outputs.DeliveryStreamArn
+  Pipeline:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/06-continuousIntegration.packaged.yml"
+      Parameters:
+        RepoOwner: braahyan
+        RepoName: lotuseater
+        RepoBranchName: master
+        NotificationEmail: pedlar.bryan@gmail.com
+        StackName: !Ref AWS::StackName

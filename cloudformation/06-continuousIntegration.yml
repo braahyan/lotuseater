@@ -17,6 +17,8 @@ Parameters:
     Type: String
   RepoOwner:
     Type: String
+  StackName:
+    Type: String
 Resources:
   buildeventmonitor:
     Properties:
@@ -238,7 +240,7 @@ Resources:
               Fn::GetAtt:
               - pipelinerole
               - Arn
-            StackName: overstack3
+            StackName: !Ref StackName
             TemplateConfiguration: MyAppBuild::cloudformation/overstack.cfg
             TemplatePath: MyAppBuild::cloudformation/overstack.packaged.yaml
           InputArtifacts:
@@ -278,11 +280,6 @@ Resources:
             - s3:GetBucketVersioning
             Effect: Allow
             Resource: '*'
-          - Action:
-            - s3:PutObject
-            Effect: Allow
-            Resource:
-            - arn:aws:s3:::codepipeline*
           - Action:
             - codedeploy:CreateDeployment
             - codedeploy:GetApplicationRevision

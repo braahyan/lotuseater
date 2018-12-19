@@ -8,11 +8,10 @@ kinesis="04-kinesis"
 kinesisCollector="05-SAMkinesisCollector"
 continuousIntegration="06-continuousIntegration"
 bucketName=$1
+stackName=$2
 
 mkdir -p ../src/modules
-if [[ $2 = "package" ]]; then
-    pip install -r ../src/requirements.txt -t ../src/modules
-fi
+pip install -r ../src/requirements.txt -t ../src/modules
 
 aws cloudformation package --template-file "$NETWORK.yml" \
             --s3-bucket $bucketName \
@@ -50,7 +49,7 @@ aws s3api put-object --bucket $bucketName --body $kinesis.packaged.yml --key $ki
 aws s3api put-object --bucket $bucketName --body $kinesisCollector.packaged.yml --key $kinesisCollector.packaged.yml
 aws s3api put-object --bucket $bucketName --body $continuousIntegration.packaged.yml --key $continuousIntegration.packaged.yml
 
-aws cloudformation deploy --template-file overstack.yml --parameter-overrides BucketName=$bucketName --stack-name overstack3 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
+#aws cloudformation deploy --template-file overstack.yml --parameter-overrides BucketName=$bucketName --stack-name $stackName --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
 
 rm -rf *packaged*.yml
 rm -rf /src/modules
