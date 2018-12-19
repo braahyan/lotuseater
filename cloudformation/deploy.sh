@@ -10,7 +10,7 @@ continuousIntegration="06-continuousIntegration"
 bucketName=$1
 
 mkdir -p ../src/modules
-if [[ $1 = "package" ]]; then
+if [[ $2 = "package" ]]; then
     pip install -r ../src/requirements.txt -t ../src/modules
 fi
 

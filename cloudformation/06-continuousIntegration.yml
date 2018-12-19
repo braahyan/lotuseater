@@ -18,23 +18,6 @@ Parameters:
   RepoOwner:
     Type: String
 Resources:
-  CodePipelineCloudFormationRole:
-    Properties:
-      AssumeRolePolicyDocument: "{\n    \"Statement\": [{\n        \"Action\": \"\
-        sts:AssumeRole\",\n        \"Effect\": \"Allow\",\n        \"Principal\":\
-        \ {\n            \"Service\": \"cloudformation.amazonaws.com\"\n        }\n\
-        \    }]\n}\n"
-      Path: /
-      Policies:
-      - PolicyDocument:
-          Fn::Sub: "{\n    \"Statement\": [{\n            \"Effect\": \"Allow\",\n\
-            \            \"Action\": [ \"*\" ],\n            \"Resource\": \"*\"\n\
-            \    }]\n}\n"
-        PolicyName:
-          Fn::Sub: ${AWS::StackName}-CloudFormation-${AWS::Region}
-      RoleName:
-        Fn::Sub: ${AWS::StackName}-CloudFormation-${AWS::Region}
-    Type: AWS::IAM::Role
   buildeventmonitor:
     Properties:
       EventPattern:
@@ -73,8 +56,8 @@ Resources:
           Fn::Join:
           - ''
           - - "version: 0.2\nartifacts:\n  files:\n    - '**/*'\nphases:\n  build:\n\
-              \    commands:\n      - pip install -r src/requirements.txt -t src/modules\n"
-            - Fn::Sub: "\n      - cd cloudformation && ./deploy.sh ${s3bucketPipeline}"
+              \    commands:"
+            - Fn::Sub: "\n      - cd cloudformation && ./deploy.sh ${s3bucketPipeline} package"
         Type: CODEPIPELINE
     Type: AWS::CodeBuild::Project
   codebuildrole:
@@ -265,6 +248,7 @@ Resources:
         Name: Deploy-Stacks
     Type: AWS::CodePipeline::Pipeline
   pipelinerole:
+    DependsOn: codebuild
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -280,6 +264,10 @@ Resources:
           Effect: Allow
           Principal:
             Service: codedeploy.amazonaws.com
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
         Version: 2008-10-17
       Policies:
       - PolicyDocument:
@@ -295,15 +283,6 @@ Resources:
             Effect: Allow
             Resource:
             - arn:aws:s3:::codepipeline*
-            - arn:aws:s3:::elasticbeanstalk*
-          - Action:
-            - codecommit:CancelUploadArchive
-            - codecommit:GetBranch
-            - codecommit:GetCommit
-            - codecommit:GetUploadArchiveStatus
-            - codecommit:UploadArchive
-            Effect: Allow
-            Resource: '*'
           - Action:
             - codedeploy:CreateDeployment
             - codedeploy:GetApplicationRevision
@@ -313,10 +292,7 @@ Resources:
             Effect: Allow
             Resource: '*'
           - Action:
-            - elasticbeanstalk:*
             - ec2:*
-            - elasticloadbalancing:*
-            - autoscaling:*
             - cloudwatch:*
             - s3:*
             - sns:*
@@ -325,54 +301,12 @@ Resources:
             - sqs:*
             - ecs:*
             - iam:PassRole
-            - dynamodb:*
             - iam:*
             - s3:*
             - firehose:*
-            Effect: Allow
-            Resource: '*'
-          - Action:
+            - codebuild:*
             - lambda:*
-            Effect: Allow
-            Resource: '*'
-          - Action:
-            - opsworks:CreateDeployment
-            - opsworks:DescribeApps
-            - opsworks:DescribeCommands
-            - opsworks:DescribeDeployments
-            - opsworks:DescribeInstances
-            - opsworks:DescribeStacks
-            - opsworks:UpdateApp
-            - opsworks:UpdateStack
-            Effect: Allow
-            Resource: '*'
-          - Action:
-            - cloudformation:CreateStack
-            - cloudformation:DeleteStack
-            - cloudformation:DescribeStacks
-            - cloudformation:UpdateStack
-            - cloudformation:CreateChangeSet
-            - cloudformation:DeleteChangeSet
-            - cloudformation:DescribeChangeSet
-            - cloudformation:ExecuteChangeSet
-            - cloudformation:SetStackPolicy
-            - cloudformation:ValidateTemplate
-            - iam:PassRole
-            Effect: Allow
-            Resource: '*'
-          - Action:
-            - codebuild:BatchGetBuilds
-            - codebuild:StartBuild
-            - codebuild:CreateProject
-            Effect: Allow
-            Resource: '*'
-          - Action:
-            - devicefarm:ListProjects
-            - devicefarm:ListDevicePools
-            - devicefarm:GetRun
-            - devicefarm:GetUpload
-            - devicefarm:CreateUpload
-            - devicefarm:ScheduleRun
+            - codepipeline:*
             Effect: Allow
             Resource: '*'
           - Action:
