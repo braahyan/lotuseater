@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Stack for Firehose DeliveryStream S3 Destination.
 Parameters:
-  S3ProcessorStackName:
+  S3BucketName:
     Type: String
 Outputs:
   StackName:
@@ -9,15 +9,9 @@ Outputs:
   DeliveryStreamArn:
     Description: The subnet ID to use for public web servers
     Value: !GetAtt deliverystream.Arn
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-DeliveryStreamArn"
   DeliveryStreamName:
     Description: The subnet ID to use for public web servers
     Value: !Ref deliverystream
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-DeliveryStreamName"
 Resources:
   deliverystream:
     DependsOn:
@@ -28,8 +22,7 @@ Resources:
         BucketARN: !Join
           - ''
           - - 'arn:aws:s3:::'
-            - Fn::ImportValue:
-                !Sub "${S3ProcessorStackName}-S3Bucket"
+            - !Ref S3BucketName
         BufferingHints:
           IntervalInSeconds: '60'
           SizeInMBs: '50'
@@ -69,13 +62,11 @@ Resources:
               - !Join
                 - ''
                 - - 'arn:aws:s3:::'
-                  - Fn::ImportValue:
-                      !Sub "${S3ProcessorStackName}-S3Bucket"
+                  - !Ref S3BucketName
               - !Join
                 - ''
                 - - 'arn:aws:s3:::'
-                  - Fn::ImportValue:
-                      !Sub "${S3ProcessorStackName}-S3Bucket"
+                  - !Ref S3BucketName
                   - '*'
       Roles:
         - !Ref deliveryRole

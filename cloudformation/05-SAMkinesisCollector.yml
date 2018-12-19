@@ -1,6 +1,8 @@
 Transform: 'AWS::Serverless-2016-10-31'
 Parameters:
-  KinesisStreamStackName:
+  KinesisStreamName:
+    Type: String
+  KinesisStreamArn:
     Type: String
 Resources:
   KinesisCollector:
@@ -10,9 +12,7 @@ Resources:
       Handler: index.handler
       Environment:
         Variables:
-          STREAM_NAME:
-            Fn::ImportValue:
-                !Sub "${KinesisStreamStackName}-DeliveryStreamName"
+          STREAM_NAME: !Ref KinesisStreamName
       CodeUri: ./../src
       Policies:
         - AWSLambdaExecute # Managed Policy
@@ -22,8 +22,7 @@ Resources:
                 - firehose:PutRecordBatch
               Effect: Allow
               Resource:
-                - Fn::ImportValue:
-                    !Sub "${KinesisStreamStackName}-DeliveryStreamArn"
+                - !Ref KinesisStreamArn
       Events:
         ThumbnailApi:
             Type: Api

@@ -1,15 +1,15 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: serverless auroroa db
 Parameters:
-  NetworkStackName:
+  Subnet1:
     Type: String
-  SecurityGroupStackName:
+  Subnet2:
+    Type: String
+  SecurityGroupId:
     Type: String
   DatabaseName:
     Type: String
     Default: 'test'
-  PipelineStackName:
-    Type: String
 Resources:
   MyRDSSecret:
     Type: "AWS::SecretsManager::Secret"
@@ -38,10 +38,8 @@ Resources:
     Properties:
       DBSubnetGroupDescription: "db subnetgroup"
       SubnetIds:
-        - Fn::ImportValue:
-            !Sub "${NetworkStackName}-PrivateSubnet1"
-        - Fn::ImportValue:
-            !Sub "${NetworkStackName}-PrivateSubnet2"
+        - !Ref Subnet1
+        - !Ref Subnet2
   DBCluster:
     Type: AWS::RDS::DBCluster
     Properties:
@@ -52,28 +50,15 @@ Resources:
       MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref MyRDSSecret, ':SecretString:password}}' ]]
       EngineMode: serverless
       VpcSecurityGroupIds:
-        - Fn::ImportValue:
-            !Sub "${SecurityGroupStackName}-DatabaseAccessSecurityGroup"
+        - !Ref SecurityGroupId
 Outputs:
   StackName:
     Value: !Ref AWS::StackName
   DatabaseEndpoint:
     Value: !GetAtt "DBCluster.Endpoint.Address"
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-DatabaseEndpoint"
   DatabasePort:
     Value: !GetAtt "DBCluster.Endpoint.Port"
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-DatabasePort"
   DatabaseCredentialsSecret:
     Value: !Ref MyRDSSecret
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-DatabaseCredentials"
   DatabaseName:
     Value: !Ref DatabaseName
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-DatabaseName"

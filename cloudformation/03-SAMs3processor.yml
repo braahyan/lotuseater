@@ -1,10 +1,18 @@
 Transform: 'AWS::Serverless-2016-10-31'
 Parameters:
-  NetworkStackName:
+  Subnet1:
     Type: String
-  SecurityGroupStackName:
+  Subnet2:
     Type: String
-  DBStackName:
+  DatabaseCredentialsSecretLocation:
+    Type: String
+  DatabaseAccessSecurityGroup:
+    Type: String
+  DatabasePort:
+    Type: String
+  DatabaseName:
+    Type: String
+  DatabaseEndpoint:
     Type: String
 Resources:
   S3BucketConsumer:
@@ -29,32 +37,19 @@ Resources:
             - Action:
                 - secretsmanager:GetSecretValue
               Effect: Allow
-              Resource:
-                Fn::ImportValue:
-                  !Sub "${DBStackName}-DatabaseCredentials"
+              Resource: !Ref DatabaseCredentialsSecretLocation
       VpcConfig:
         SubnetIds:
-          - Fn::ImportValue:
-              !Sub "${NetworkStackName}-PrivateSubnet1"
-          - Fn::ImportValue:
-              !Sub "${NetworkStackName}-PrivateSubnet2"
+          - !Ref Subnet1
+          - !Ref Subnet2
         SecurityGroupIds:
-          - Fn::ImportValue:
-              !Sub "${SecurityGroupStackName}-DatabaseAccessSecurityGroup"
+          - !Ref DatabaseAccessSecurityGroup
       Environment:
         Variables:
-          DB_NAME:
-            Fn::ImportValue:
-              !Sub "${DBStackName}-DatabaseName"
-          DB_CREDENTIALS:
-            Fn::ImportValue:
-              !Sub "${DBStackName}-DatabaseCredentials"
-          DB_ENDPOINT:
-            Fn::ImportValue:
-              !Sub "${DBStackName}-DatabaseEndpoint"
-          DB_PORT:
-            Fn::ImportValue:
-              !Sub "${DBStackName}-DatabasePort"
+          DB_NAME: !Ref DatabaseName
+          DB_CREDENTIALS: !Ref DatabaseCredentialsSecretLocation
+          DB_ENDPOINT: !Ref DatabaseEndpoint
+          DB_PORT: !Ref DatabasePort
 
       Events:
         ObjectReceived:
@@ -72,9 +67,5 @@ Outputs:
   StackName:
     Value: !Ref AWS::StackName
   S3Bucket:
-    Description: The subnet ID to use for public web servers
     Value:
       Ref: S3Bucket
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-S3Bucket"

@@ -1,16 +1,14 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: lotuseater
 Parameters:
-  NetworkStackName:
+  Vpc:
     Type: String
 Resources:
   DatabaseAccessSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group For accessing database
-      VpcId:
-        Fn::ImportValue:
-          !Sub "${NetworkStackName}-VPC"
+      VpcId: !Ref Vpc
   DBACcessIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -24,6 +22,3 @@ Outputs:
     Description: The subnet ID to use for public web servers
     Value:
       Ref: DatabaseAccessSecurityGroup
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-DatabaseAccessSecurityGroup"

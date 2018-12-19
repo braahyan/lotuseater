@@ -12,63 +12,16 @@ Resources:
     Properties:
       TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/01-securityGroups.packaged.yml"
       Parameters:
-        NetworkStackName:
-          Fn::Select:
-            - 1
-            - !Split [ "/", !Ref Network ]
+        Vpc: !GetAtt Network.Outputs.Vpc
   Aurora:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/02-aurora.packaged.yml"
       Parameters:
-        NetworkStackName:
-          Fn::Select:
-            - 1
-            - !Split [ "/", !Ref Network ]
-        SecurityGroupStackName:
-          Fn::Select:
-            - 1
-            - !Split [ "/",!Ref SecurityGroups]
+        Subnet1: !GetAtt Network.Outputs.PrivateSubnet1
+        Subnet2: !GetAtt Network.Outputs.PrivateSubnet2
+        SecurityGroupId: !GetAtt SecurityGroups.Outputs.DatabaseAccessSecurityGroup
         DatabaseName: 'test'
-        PipelineStackName:
-          Fn::Select:
-            - 1
-            - !Split [ "/", !Ref Pipeline]
-  S3Processor:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/03-SAMs3processor.packaged.yml"
-      Parameters:
-        NetworkStackName:
-          Fn::Select:
-            - 1
-            - !Split [ "/", !Ref Network ]
-        SecurityGroupStackName:
-          Fn::Select:
-            - 1
-            - !Split [ "/", !Ref SecurityGroups]
-        DBStackName:
-          Fn::Select:
-            - 1
-            - !Split [ "/", !Ref Aurora]
-  KinesisFirehose:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/04-kinesis.packaged.yml"
-      Parameters:
-        S3ProcessorStackName:
-          Fn::Select:
-            - 1
-            - !Split [ "/",!Ref S3Processor]
-  KinesisCollector:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/05-SAMkinesisCollector.packaged.yml"
-      Parameters:
-        KinesisStreamStackName:
-          Fn::Select:
-            - 1
-            - !Split [ "/", !Ref KinesisFirehose]
   Pipeline:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -78,3 +31,28 @@ Resources:
         RepoName: lotuseater
         RepoBranchName: master
         NotificationEmail: pedlar.bryan@gmail.com
+  S3Processor:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/03-SAMs3processor.packaged.yml"
+      Parameters:
+        Subnet1: !GetAtt Network.Outputs.PrivateSubnet1
+        Subnet2: !GetAtt Network.Outputs.PrivateSubnet2
+        DatabaseCredentialsSecretLocation: !GetAtt Aurora.Outputs.DatabaseCredentialsSecret
+        DatabaseAccessSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseAccessSecurityGroup
+        DatabasePort: !GetAtt Aurora.Outputs.DatabasePort
+        DatabaseName: 'test'
+        DatabaseEndpoint: !GetAtt Aurora.Outputs.DatabaseEndpoint
+  KinesisFirehose:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/04-kinesis.packaged.yml"
+      Parameters:
+        S3BucketName: !GetAtt S3Processor.Outputs.S3Bucket
+  KinesisCollector:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/05-SAMkinesisCollector.packaged.yml"
+      Parameters:
+        KinesisStreamName: !GetAtt KinesisFirehose.Outputs.DeliveryStreamName
+        KinesisStreamArn: !GetAtt KinesisFirehose.Outputs.DeliveryStreamArn
