@@ -256,7 +256,7 @@ Resources:
               Fn::GetAtt:
               - pipelinerole
               - Arn
-            StackName: overstack
+            StackName: overstack3
             TemplateConfiguration: MyAppBuild::cloudformation/overstack.cfg
             TemplatePath: MyAppBuild::cloudformation/overstack.packaged.yaml
           InputArtifacts:
