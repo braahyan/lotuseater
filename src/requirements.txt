@@ -1,0 +1,5 @@
+requests
+sqlalchemy
+alembic
+PyMySQL
+boto3
