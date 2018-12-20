@@ -9,7 +9,7 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       Runtime: python3.6
-      Handler: index.handler
+      Handler: lotuseater.index.handler
       Environment:
         Variables:
           STREAM_NAME: !Ref KinesisStreamName

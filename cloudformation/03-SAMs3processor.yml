@@ -19,7 +19,7 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       Runtime: python3.6
-      Handler: index.s3_handler
+      Handler: lotuseater.index.s3_handler
       Timeout: 180
       CodeUri: ./../src
       Policies:

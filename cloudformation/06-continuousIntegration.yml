@@ -9,8 +9,6 @@ Outputs:
     Value:
       Ref: AWS::StackName
 Parameters:
-  NotificationEmail:
-    Type: String
   RepoBranchName:
     Type: String
   RepoName:
@@ -331,8 +329,7 @@ Resources:
       DisplayName:
         Ref: AWS::StackName
       Subscription:
-      - Endpoint:
-          Ref: NotificationEmail
+      - Endpoint: !Join ['', ['{{resolve:secretsmanager:', MyEmail, ':SecretString}}' ]]
         Protocol: email
       TopicName:
         Ref: AWS::StackName

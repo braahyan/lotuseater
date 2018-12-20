@@ -1,4 +1,0 @@
-requests
-sqlalchemy
-alembic
-PyMySQL
