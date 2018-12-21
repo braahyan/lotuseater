@@ -1,12 +1,10 @@
-import sys
+# this line sets up the library loading
+import util.lambda_magic
 import os
-sys.path.append(os.path.dirname(__file__) + "/../modules")
 import json
 import boto3
 import requests
 from models.sample import Base
-
-
 
 
 def handler(event, context):
@@ -73,8 +71,6 @@ def s3_handler(event, context):
             SecretId=os.environ.get('DB_CREDENTIALS')
         )
         creds = json.loads(response['SecretString'])
-
-
     finally:
         print("foo")
     print("doing a thing")
