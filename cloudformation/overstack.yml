@@ -57,7 +57,7 @@ Resources:
         RepoOwner: braahyan
         RepoName: lotuseater
         RepoBranchName: master
-        NotificationEmail: pedlar.bryan@gmail.com
+        NotificationEmail: !Join ['', ['{{resolve:secretsmanager:', MyEmail, ':SecretString}}' ]]
         Subnet1: !GetAtt Network.Outputs.PrivateSubnet1
         Subnet2: !GetAtt Network.Outputs.PrivateSubnet2
         DatabaseCredentialsSecretLocation: !GetAtt Aurora.Outputs.DatabaseCredentialsSecret
