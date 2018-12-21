@@ -1,5 +1,6 @@
 # this line sets up the library loading
-import util.lambda_magic
+# noinspection PyUnresolvedReferences
+import util.library_path_setup
 import os
 import json
 import boto3

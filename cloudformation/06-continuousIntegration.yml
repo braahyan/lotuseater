@@ -17,6 +17,20 @@ Parameters:
     Type: String
   StackName:
     Type: String
+  DatabaseCredentialsSecretLocation:
+    Type: String
+  DatabaseAccessSecurityGroup:
+    Type: String
+  DatabasePort:
+    Type: String
+  DatabaseName:
+    Type: String
+  DatabaseEndpoint:
+    Type: String
+  Subnet1:
+    Type: String
+  Subnet2:
+    Type: String
 Resources:
   buildeventmonitor:
     Properties:
@@ -59,6 +73,40 @@ Resources:
               \    commands:"
             - Fn::Sub: "\n      - cd cloudformation && chmod 755 deploy.sh && ./deploy.sh ${s3bucketPipeline} ${StackName}"
         Type: CODEPIPELINE
+    Type: AWS::CodeBuild::Project
+  codebuildmigration:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/python:3.6.5
+        Type: LINUX_CONTAINER
+      Name:
+        Ref: AWS::StackName
+      ServiceRole:
+        Ref: codebuildrole
+      Source:
+        BuildSpec:
+          Fn::Join:
+            - ''
+            - - "version: 0.2\nartifacts:\n  files:\n    - '**/*'\nphases:\n  build:\n\
+              \    commands:\n"
+              - Fn::Sub: "      - cd src && modules/bin/alembic upgrade head"
+              - "env:\n\
+              \    variables:\n"
+              - Fn::Sub: "      DatabaseCredentialsSecretLocation: ${DatabaseCredentialsSecretLocation}\n"
+              - Fn::Sub: "      DatabaseAccessSecurityGroup: ${DatabaseAccessSecurityGroup}\n"
+              - Fn::Sub: "      DatabasePort: ${DatabasePort}\n"
+              - Fn::Sub: "      DatabaseName: ${DatabaseName}\n"
+              - Fn::Sub: "      DatabaseEndpoint: ${DatabaseEndpoint}\n"
+        Type: CODEPIPELINE
+        VpcConfig:
+          SubnetIds:
+            - !Ref Subnet1
+            - !Ref Subnet2
+          SecurityGroupIds:
+            - !Ref DatabaseAccessSecurityGroup
     Type: AWS::CodeBuild::Project
   codebuildrole:
     Properties:
@@ -245,7 +293,21 @@ Resources:
           - Name: MyAppBuild
           Name: DeployApplication-Overstack
           RunOrder: 1
-        Name: Deploy-Stacks
+        Name: Deploy-Stacks'
+      - Actions:
+          - ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Provider: CodeBuild
+              Version: '1'
+            Configuration:
+              ProjectName:
+                Ref: codebuildmigration
+            InputArtifacts:
+              - Name: MyAppBuild
+            Name: CodeBuild
+            RunOrder: 1
+        Name: Run-Migrations
     Type: AWS::CodePipeline::Pipeline
   pipelinerole:
     DependsOn: codebuild

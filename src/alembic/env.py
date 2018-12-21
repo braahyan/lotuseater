@@ -1,18 +1,40 @@
-from __future__ import with_statement
 import sys
-import os
-sys.path.append(os.path.dirname(__file__) + "/../modules")
 
-print(os.getcwd())
+import json
+import os
+
+import boto3
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
+
 sys.path.append(".")
+# noinspection PyUnresolvedReferences
+import lotuseater.util.library_path_setup
 from lotuseater.models.sample import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+if os.environ.get('DatabaseCredentialsSecretLocation'):
+    client = boto3.client('secretsmanager')
+    response = client.get_secret_value(
+        SecretId=os.environ.get('DatabaseCredentialsSecretLocation')
+
+    )
+    creds = json.loads(response['SecretString'])
+    sqlalchemyUrl = 'mysql+pymysql://' + \
+             creds['username'] + \
+             ':' + \
+             creds['password'] + \
+             '@' + \
+             os.environ.get('DB_ENDPOINT') + \
+             ':' + \
+             os.environ.get('DB_PORT') + \
+             '/' + \
+             os.environ.get('DB_NAME')
+
+    config.set_main_option("sqlalchemy.url", sqlalchemyUrl)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -23,6 +45,7 @@ fileConfig(config.config_file_name)
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -70,6 +93,7 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

@@ -56,4 +56,10 @@ Resources:
         RepoName: lotuseater
         RepoBranchName: master
         NotificationEmail: pedlar.bryan@gmail.com
-        StackName: !Ref AWS::StackName
+        Subnet1: !GetAtt Network.Outputs.PrivateSubnet1
+        Subnet2: !GetAtt Network.Outputs.PrivateSubnet2
+        DatabaseCredentialsSecretLocation: !GetAtt Aurora.Outputs.DatabaseCredentialsSecret
+        DatabaseAccessSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseAccessSecurityGroup
+        DatabasePort: !GetAtt Aurora.Outputs.DatabasePort
+        DatabaseName: 'test'
+        DatabaseEndpoint: !GetAtt Aurora.Outputs.DatabaseEndpoint
