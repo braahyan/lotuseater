@@ -15,8 +15,6 @@ Parameters:
     Type: String
   RepoOwner:
     Type: String
-  StackName:
-    Type: String
   DatabaseCredentialsSecretLocation:
     Type: String
   DatabaseAccessSecurityGroup:
