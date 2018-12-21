@@ -2,6 +2,8 @@ Transform: 'AWS::Serverless-2016-10-31'
 Parameters:
   BucketName:
     Type: String
+  StackName:
+    Type: String
 Resources:
   Network:
     Type: AWS::CloudFormation::Stack
@@ -63,3 +65,4 @@ Resources:
         DatabasePort: !GetAtt Aurora.Outputs.DatabasePort
         DatabaseName: 'test'
         DatabaseEndpoint: !GetAtt Aurora.Outputs.DatabaseEndpoint
+        StackName: !Ref StackName
