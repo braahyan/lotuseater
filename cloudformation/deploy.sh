@@ -49,7 +49,10 @@ aws s3api put-object --bucket $bucketName --body $kinesis.packaged.yml --key $ki
 aws s3api put-object --bucket $bucketName --body $kinesisCollector.packaged.yml --key $kinesisCollector.packaged.yml
 aws s3api put-object --bucket $bucketName --body $continuousIntegration.packaged.yml --key $continuousIntegration.packaged.yml
 
-#aws cloudformation deploy --template-file overstack.yml --parameter-overrides BucketName=$bucketName --stack-name $stackName --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
+if [ "$3" = "push" ]
+then
+    aws cloudformation deploy --template-file overstack.yml --parameter-overrides BucketName=$bucketName StackName=$stackName --stack-name $stackName --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
+fi
 
 rm -rf *packaged*.yml
 rm -rf /src/modules

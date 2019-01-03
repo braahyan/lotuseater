@@ -21,7 +21,7 @@ Resources:
       Runtime: python3.6
       Handler: lotuseater.index.s3_handler
       Timeout: 180
-      CodeUri: ./../src
+      CodeUri: "./../src"
       Policies:
         - AWSLambdaExecute # Managed Policy
         - Version: '2012-10-17'
@@ -50,7 +50,6 @@ Resources:
           DB_CREDENTIALS: !Ref DatabaseCredentialsSecretLocation
           DB_ENDPOINT: !Ref DatabaseEndpoint
           DB_PORT: !Ref DatabasePort
-
       Events:
         ObjectReceived:
           Type: S3

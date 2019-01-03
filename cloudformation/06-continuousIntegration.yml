@@ -33,6 +33,8 @@ Parameters:
     Type: String
   Subnet2:
     Type: String
+  VpcId:
+    Type: String
 Resources:
   buildeventmonitor:
     Properties:
@@ -78,14 +80,20 @@ Resources:
     Type: AWS::CodeBuild::Project
   codebuildmigration:
     Properties:
+      VpcConfig:
+        VpcId: !Ref VpcId
+        Subnets:
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !Ref DatabaseAccessSecurityGroup
       Artifacts:
         Type: CODEPIPELINE
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/python:3.6.5
         Type: LINUX_CONTAINER
-      Name:
-        Ref: AWS::StackName
+      Name: !Sub "${AWS::StackName}-migrations"
       ServiceRole:
         Ref: codebuildrole
       Source:
@@ -103,12 +111,7 @@ Resources:
               - Fn::Sub: "      DatabaseName: ${DatabaseName}\n"
               - Fn::Sub: "      DatabaseEndpoint: ${DatabaseEndpoint}\n"
         Type: CODEPIPELINE
-        VpcConfig:
-          SubnetIds:
-            - !Ref Subnet1
-            - !Ref Subnet2
-          SecurityGroupIds:
-            - !Ref DatabaseAccessSecurityGroup
+
     Type: AWS::CodeBuild::Project
   codebuildrole:
     Properties:
@@ -190,6 +193,10 @@ Resources:
                 - ':'
                 - Ref: AWS::AccountId
                 - :parameter/CodeBuild/*
+          - Action:
+              - ec2:*
+              Effect: Allow
+              Resource: "*"
           Version: 2012-10-17
         PolicyName: CodeBuild
       RoleName:
@@ -393,7 +400,7 @@ Resources:
       DisplayName:
         Ref: AWS::StackName
       Subscription:
-      - Endpoint: !Ref NotifcationEmail
+      - Endpoint: !Ref NotificationEmail
         Protocol: email
       TopicName:
         Ref: AWS::StackName

@@ -49,20 +49,22 @@ Resources:
       Parameters:
         KinesisStreamName: !GetAtt KinesisFirehose.Outputs.DeliveryStreamName
         KinesisStreamArn: !GetAtt KinesisFirehose.Outputs.DeliveryStreamArn
-  Pipeline:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/06-continuousIntegration.packaged.yml"
-      Parameters:
-        RepoOwner: braahyan
-        RepoName: lotuseater
-        RepoBranchName: master
-        NotificationEmail: !Join ['', ['{{resolve:secretsmanager:', MyEmail, ':SecretString}}' ]]
-        Subnet1: !GetAtt Network.Outputs.PrivateSubnet1
-        Subnet2: !GetAtt Network.Outputs.PrivateSubnet2
-        DatabaseCredentialsSecretLocation: !GetAtt Aurora.Outputs.DatabaseCredentialsSecret
-        DatabaseAccessSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseAccessSecurityGroup
-        DatabasePort: !GetAtt Aurora.Outputs.DatabasePort
-        DatabaseName: 'test'
-        DatabaseEndpoint: !GetAtt Aurora.Outputs.DatabaseEndpoint
-        StackName: !Ref StackName
+
+#  Pipeline:
+#    Type: AWS::CloudFormation::Stack
+#    Properties:
+#      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/06-continuousIntegration.packaged.yml"
+#      Parameters:
+#        RepoOwner: braahyan
+#        RepoName: lotuseater
+#        RepoBranchName: master
+#        NotificationEmail: !Join ['', ['{{resolve:secretsmanager:', MyEmail, ':SecretString}}' ]]
+#        Subnet1: !GetAtt Network.Outputs.PrivateSubnet1
+#        Subnet2: !GetAtt Network.Outputs.PrivateSubnet2
+#        DatabaseCredentialsSecretLocation: !GetAtt Aurora.Outputs.DatabaseCredentialsSecret
+#        DatabaseAccessSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseAccessSecurityGroup
+#        DatabasePort: !GetAtt Aurora.Outputs.DatabasePort
+#        DatabaseName: 'test'
+#        DatabaseEndpoint: !GetAtt Aurora.Outputs.DatabaseEndpoint
+#        StackName: !Ref StackName
+#        VpcId: !GetAtt Network.Outputs.Vpc
